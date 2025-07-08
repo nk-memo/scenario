@@ -9,14 +9,14 @@ export default async function handler(req, res) {
   }
 
   try {
-    // --- ↓↓↓ ここから修正箇所 ↓↓↓ ---
+
 
     // モデルの定義をhandler関数の内側に移動
-    const MODEL_NAME = "gemini-2.0-flash"; // 2025年の安定モデル
+    const MODEL_NAME = "gemini-2.5-pro";
     const genAI = new GoogleGenerativeAI(API_KEY);
     const model = genAI.getGenerativeModel({ model: MODEL_NAME });
 
-    // --- ↑↑↑ ここまで修正箇所 ↑↑↑ ---
+  
 
     const { mainSubject, summary, targets, features, duration } = req.body;
 
