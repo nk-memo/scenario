@@ -1,0 +1,8 @@
+{
+  "name": "my-scenario-app",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@google/generative-ai": "^0.11.3"
+  }
+}
