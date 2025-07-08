@@ -12,7 +12,7 @@ export default async function handler(req, res) {
 
 
     // モデルの定義をhandler関数の内側に移動
-    const MODEL_NAME = "gemini-2.5-pro";
+    const MODEL_NAME = "gemini-2.5-flash";
     const genAI = new GoogleGenerativeAI(API_KEY);
     const model = genAI.getGenerativeModel({ model: MODEL_NAME });
 
