@@ -1,24 +1,41 @@
-// GoogleのAIライブラリをインポート
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 
-// Vercelの環境変数からAPIキーを読み込む
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const API_KEY = process.env.GEMINI_API_KEY;
 
 // Vercelサーバーレス関数のエントリーポイント
 export default async function handler(req, res) {
-  // POSTリクエスト以外は拒否
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
   try {
+    // --- ↓↓↓ ここから修正箇所 ↓↓↓ ---
+
+    // モデルの定義をhandler関数の内側に移動
+    const MODEL_NAME = "gemini-2.0-flash"; // 2025年の安定モデル
+    const genAI = new GoogleGenerativeAI(API_KEY);
+    const model = genAI.getGenerativeModel({ model: MODEL_NAME });
+
+    // --- ↑↑↑ ここまで修正箇所 ↑↑↑ ---
+
     const { mainSubject, summary, targets, features, duration } = req.body;
 
-    // AIモデルを選択
-// 変更後
-const MODEL_NAME = "gemini-2.0-flash";
+    // 安全性設定
+    const generationConfig = {
+      temperature: 0.9,
+      topK: 1,
+      topP: 1,
+      maxOutputTokens: 2048,
+    };
 
-    // AIへの指示書（プロンプト）を作成
+    const safetySettings = [
+      { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+      { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+      { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+      { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+    ];
+
+    // AIへの指示書（プロンプト）
     const prompt = `
 あなたは、YouTubeやTikTok向けの短い動画シナリオを作成するプロの脚本家です。
 以下の製品情報をもとに、視聴者の心に響く動画シナリオ案を3つ作成してください。
@@ -39,15 +56,19 @@ const MODEL_NAME = "gemini-2.0-flash";
 `;
 
     // AIにリクエストを送信
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    const result = await model.generateContent({
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      generationConfig,
+      safetySettings,
+    });
+    
+    // レスポンスのテキストを取得
+    const text = result.response.text();
 
-    // 成功したら結果をJSONで返す
     res.status(200).json({ text });
 
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'AIとの通信中にエラーが発生しました。' });
+    console.error("詳細なエラー:", error);
+    res.status(500).json({ error: 'AIとの通信中にエラーが発生しました。詳細はサーバーログを確認してください。', details: error.message });
   }
 }
