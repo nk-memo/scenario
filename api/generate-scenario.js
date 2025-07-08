@@ -15,7 +15,8 @@ export default async function handler(req, res) {
     const { mainSubject, summary, targets, features, duration } = req.body;
 
     // AIモデルを選択
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro-latest" });
+// 変更後
+const model = genAI.getGenerativeModel({ model: "gemini-1.0-pro" });
 
     // AIへの指示書（プロンプト）を作成
     const prompt = `
